@@ -1,0 +1,14 @@
+commands:
+  at:
+    get:
+      messages:
+        guild: '[{0}] '
+    subscribe: 
+      messages:
+        success: 添加订阅成功！
+        exist: 已经订阅此频道！
+      shortcut: 订阅@
+    unsubscribe:
+      messages:
+        none: 你没有订阅过此频道！
+        success: 移除订阅成功！

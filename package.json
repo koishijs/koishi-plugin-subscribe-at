@@ -1,21 +1,54 @@
 {
   "name": "koishi-plugin-subscribe-at",
-  "description": "",
+  "description": "Record messages that mention you.",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/koishijs/koishi-plugin-subscribe-at.git"
+  },
+  "bugs": {
+    "url": "https://github.com/koishijs/koishi-plugin-subscribe-at/issues"
+  },
+  "homepage": "https://github.com/koishijs/koishi-plugin-subscribe-at",
   "version": "1.0.0",
   "main": "lib/index.js",
   "typings": "lib/index.d.ts",
+  "author": {
+    "email": "seidko.coding@gmail.com",
+    "name": "Seidko",
+    "url": "https://github.com/Seidko"
+  },
   "files": [
     "lib",
     "dist"
   ],
   "license": "MIT",
-  "scripts": {},
+  "scripts": {
+    "build": "atsc -b"
+  },
   "keywords": [
+    "bot",
     "chatbot",
     "koishi",
-    "plugin"
+    "plugin",
+    "at",
+    "mention",
+    "record"
   ],
   "peerDependencies": {
-    "koishi": "^4.11.4"
+    "koishi": "^4.11.5"
+  },
+  "devDependencies": {
+    "atsc": "^1.2.2"
+  },
+  "koishi": {
+    "description": {
+      "en": "Record messages that mention you.",
+      "zh": "记录@你的消息"
+    },
+    "service": {
+      "required": [
+        "database"
+      ]
+    }
   }
 }
