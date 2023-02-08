@@ -43,7 +43,7 @@
   "koishi": {
     "description": {
       "en": "Record messages that mention you.",
-      "zh": "记录@你的消息"
+      "zh": "记录@你的消息。"
     },
     "service": {
       "required": [
