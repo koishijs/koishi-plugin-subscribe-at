@@ -90,7 +90,7 @@ export function apply(ctx: Context, config: Config) {
     
     if (!atMessages?.length) return session.text('.empty')
     for (let i = 0; i < atMessages.length; i += 100) {
-      session.send(<message forward>
+      await session.send(<message forward>
         {await Promise.all(atMessages.slice(i, i + 100).map(async e => {
           if (config.deleteBeforeGet) ctx.database.remove('at_record', { id: e.id })
           return <message>
@@ -101,6 +101,7 @@ export function apply(ctx: Context, config: Config) {
       }))}
       </message>)
     }
+    if (config.deleteBeforeGet) atMessages.forEach(e => ctx.database.remove('at_record', { id: e.id }))
   })
 
   ctx.command('at.subscribe').channelFields(['atSubscribers']).action(({ session }) => {
