@@ -1,4 +1,4 @@
-import { Context, Schema, Session, Element, h } from 'koishi'
+import { Context, Schema, Session, Element, h, $ } from 'koishi'
 
 declare module 'koishi' {
   interface Tables {
@@ -14,7 +14,6 @@ export interface AtRecord {
   targetId: string
   senderId: string
   nickname: string
-  guildId: string
   guildName: string
   content: string
   time: Date
@@ -39,11 +38,9 @@ function dedupe<T = any>(arr: T[], primary: (item: T) => string | number | symbo
 
 async function transformAt(elements: Element[], session: Session): Promise<Element[]> {
   return Promise.all(elements.map(async e => {
-    if (e.type === 'at') {
-      const target = await session.bot.getGuildMember(session.guildId, e.attrs.id)
-      return h.text(`@${target.nickname || target.username || target.userId} `)
-    }
-    return e
+    if (e.type !== 'at') return e
+    const target = await session.bot.getGuildMember(session.guildId, e.attrs.id)
+    return h.text(`@${target.nickname || target.username || target.userId} `)
   }))
 }
 
@@ -55,7 +52,6 @@ export function apply(ctx: Context, config: Config) {
     targetId: 'string',
     senderId: 'string',
     nickname: 'string',
-    guildId: 'string',
     guildName: 'string',
     content: 'text',
     time: 'timestamp',
@@ -69,38 +65,49 @@ export function apply(ctx: Context, config: Config) {
 
   ctx.guild().middleware(async (session: Session) => {
     const contentElements = config.atDeduplication ? dedupe(session.elements, elem => elem.attrs.id ?? Math.random()) : session.elements
-    const { atSubscribers } = await ctx.database.getChannel(session.platform, session.channelId)
-    const atElements = contentElements.filter(elem =>  elem.type === 'at' && atSubscribers.includes(elem.attrs.id))
-    const sender = await session.bot.getGuildMember(session.guildId, session.userId)
-    const guild = await session.bot.getGuild(session.guildId)
+    // `Promise.all()` here makes all asynchronous functions running concurrently.
+    const [{ atSubscribers }, { guildName }, sender, content] = await Promise.all([
+      ctx.database.getChannel(session.platform, session.channelId),
+      session.bot.getGuild(session.guildId),
+      session.bot.getGuildMember(session.guildId, session.userId),
+      transformAt(session.elements, session),
+    ])
+    const atElements = contentElements.filter(elem => elem.type === 'at' && atSubscribers.includes(elem.attrs.id))
+    const time = new Date(session.timestamp)
 
-    atElements.forEach(async (value) => ctx.database.create('at_record', {
-      time: new Date(session.timestamp),
+    atElements.forEach((value) => ctx.database.create('at_record', {
       targetId: value.attrs.id,
       senderId: session.userId,
       nickname: sender.nickname || sender.username || sender.userId,
-      guildId: session.guildId,
-      guildName: guild.guildName,
-      content: contentElements.map(i => i.toString()).join(''),
+      content: content.join(''),
+      guildName,
+      time,
     }))
   })
 
-  ctx.command('at.get').action(async ({ session }) => {
-    const atMessages = await ctx.database.get('at_record', { targetId: session.userId })
-    
-    if (!atMessages?.length) return session.text('.empty')
-    for (let i = 0; i < atMessages.length; i += 100) {
-      await session.send(<message forward>
-        {await Promise.all(atMessages.slice(i, i + 100).map(async e => {
-          return <message>
+  ctx.command('at.get')
+  .option('count', '-n <count:number>', { fallback: 10 })
+  .option('all', '-a')
+  .action(async ({ session, options }) => {
+    const totalCount = await ctx.database.select('at_record').where({ targetId: session.userId }).execute(r => $.count(r.id))
+
+    if (totalCount < 1) return session.text('.empty')
+
+    const messages = await ctx.database.get('at_record', { targetId: session.userId }, { limit: options.all ? totalCount : Math.min(options.count, totalCount) })
+
+    for (let o = 0; o < messages.length; o += 100) {
+      await session.sendQueued(<message forward>
+        {messages.slice(o, o + 100).map(e => <>
+          <message>
             <author userId={e.senderId} nickname={e.nickname}/>
-            <i18n path=".guild">{[e.guildName ?? e.guildId]}</i18n>
-            {await transformAt(h.parse(e.content), session)}
+            <i18n path=".guild">{[e.guildName]}</i18n>
+            {h.parse(e.content)}
           </message>
-      }))}
+        </>)}
       </message>)
     }
-    if (config.deleteBeforeGet) atMessages.forEach(e => ctx.database.remove('at_record', { id: e.id }))
+    
+    if (config.deleteBeforeGet) await ctx.database.remove('at_record', messages.map(m => m.id))
   })
 
   ctx.command('at.subscribe').channelFields(['atSubscribers']).action(({ session }) => {
