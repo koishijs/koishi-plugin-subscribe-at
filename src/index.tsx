@@ -23,10 +23,12 @@ export interface AtRecord {
 export const name = 'subscribe-at'
 export interface Config {
   atDeduplication: boolean
+  deleteBeforeGet: boolean
 }
 
 export const Config: Schema<Config> = Schema.object({
-  atDeduplication: Schema.boolean().default(true).description('@去重，如果关闭，在被回复的时候有可能出现两个@。')
+  atDeduplication: Schema.boolean().default(true).description('@去重，如果关闭，在被回复的时候有可能出现两个@。'),
+  deleteBeforeGet: Schema.boolean().default(true).description('是否在阅读后删除数据库中的消息记录。'),
 })
 
 export const using = ['database'] as const
@@ -84,15 +86,18 @@ export function apply(ctx: Context, config: Config) {
   })
 
   ctx.command('at.get').action(async ({ session }) => {
-    const atMessages = await ctx.database.get('at_record', { targetId: { $eq: session.userId }})
+    const atMessages = await ctx.database.get('at_record', { targetId: session.userId })
     
     for (let i = 0; i < atMessages.length; i += 100) {
       session.send(<message forward>
-        {await Promise.all(atMessages.slice(i, i + 100).map(async e => <message>
-          <author userId={e.senderId} nickname={e.nickname}/>
-          <i18n path=".guild">{[e.guildName ?? e.guildId]}</i18n>
-          {await transformAt(h.parse(e.content), session)}
-        </message>))}
+        {await Promise.all(atMessages.slice(i, i + 100).map(async e => {
+          if (config.deleteBeforeGet) ctx.database.remove('at_record', { id: e.id })
+          return <message>
+            <author userId={e.senderId} nickname={e.nickname}/>
+            <i18n path=".guild">{[e.guildName ?? e.guildId]}</i18n>
+            {await transformAt(h.parse(e.content), session)}
+          </message>
+      }))}
       </message>)
     }
   })
