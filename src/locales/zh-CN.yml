@@ -3,6 +3,7 @@ commands:
     get:
       messages:
         guild: '[{0}] '
+        empty: '没有@的消息记录。'
     subscribe: 
       messages:
         success: 添加订阅成功！

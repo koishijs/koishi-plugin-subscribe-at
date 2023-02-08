@@ -88,6 +88,7 @@ export function apply(ctx: Context, config: Config) {
   ctx.command('at.get').action(async ({ session }) => {
     const atMessages = await ctx.database.get('at_record', { targetId: session.userId })
     
+    if (!atMessages?.length) return session.text('.empty')
     for (let i = 0; i < atMessages.length; i += 100) {
       session.send(<message forward>
         {await Promise.all(atMessages.slice(i, i + 100).map(async e => {
