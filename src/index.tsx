@@ -92,7 +92,6 @@ export function apply(ctx: Context, config: Config) {
     for (let i = 0; i < atMessages.length; i += 100) {
       await session.send(<message forward>
         {await Promise.all(atMessages.slice(i, i + 100).map(async e => {
-          if (config.deleteBeforeGet) ctx.database.remove('at_record', { id: e.id })
           return <message>
             <author userId={e.senderId} nickname={e.nickname}/>
             <i18n path=".guild">{[e.guildName ?? e.guildId]}</i18n>
