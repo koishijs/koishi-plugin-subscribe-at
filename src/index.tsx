@@ -75,14 +75,14 @@ export function apply(ctx: Context, config: Config) {
     const atElements = contentElements.filter(elem => elem.type === 'at' && atSubscribers.includes(elem.attrs.id))
     const time = new Date(session.timestamp)
 
-    atElements.forEach((value) => ctx.database.create('at_record', {
-      targetId: value.attrs.id,
+    await ctx.database.upsert('at_record', atElements.map(e => ({
+      targetId: e.attrs.id,
       senderId: session.userId,
       nickname: sender.nickname || sender.username || sender.userId,
       content: content.join(''),
       guildName,
       time,
-    }))
+    })))
   })
 
   ctx.command('at.get')
