@@ -72,7 +72,7 @@ export function apply(ctx: Context, config: Config) {
       ctx.database.getChannel(session.platform, session.channelId),
       session.bot.getGuild(session.guildId),
       session.bot.getGuildMember(session.guildId, session.userId),
-      transformAt(session.elements, session),
+      transformAt(contentElements, session),
     ])
     const time = new Date(session.timestamp)
 
