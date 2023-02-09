@@ -118,8 +118,9 @@ export function apply(ctx: Context, config: Config) {
 
   ctx.command('at.unsubscribe').channelFields(['atSubscribers']).action(({ session }) => {
     const sub = session.channel.atSubscribers
-    if (!sub.includes(session.userId)) return session.text('.none')
-    sub.splice(sub.findIndex(u => u === session.userId), 1)
+    const index = sub.indexOf(session.userId)
+    if (index < 0) return session.text('.none')
+    sub.splice(index, 1)
     return session.text('.success')
   })
 }
