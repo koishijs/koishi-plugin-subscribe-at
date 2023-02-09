@@ -63,8 +63,10 @@ export function apply(ctx: Context, config: Config) {
     atSubscribers: 'list',
   })
 
-  ctx.guild().middleware(async (session: Session) => {
+  ctx.guild().middleware(async (session, next) => {
     const contentElements = config.atDeduplication ? dedupe(session.elements, elem => elem.attrs.id ?? Math.random()) : session.elements
+    const atElements = contentElements.filter(elem => elem.type === 'at' && atSubscribers.includes(elem.attrs.id))
+    if (atElements.length < 1) return next()
     // `Promise.all()` here makes all asynchronous functions running concurrently.
     const [{ atSubscribers }, { guildName }, sender, content] = await Promise.all([
       ctx.database.getChannel(session.platform, session.channelId),
@@ -72,7 +74,6 @@ export function apply(ctx: Context, config: Config) {
       session.bot.getGuildMember(session.guildId, session.userId),
       transformAt(session.elements, session),
     ])
-    const atElements = contentElements.filter(elem => elem.type === 'at' && atSubscribers.includes(elem.attrs.id))
     const time = new Date(session.timestamp)
 
     await ctx.database.upsert('at_record', atElements.map(e => ({
@@ -83,6 +84,7 @@ export function apply(ctx: Context, config: Config) {
       guildName,
       time,
     })))
+    return next()
   })
 
   ctx.command('at.get')
