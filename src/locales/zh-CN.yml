@@ -5,12 +5,17 @@ commands:
         guild: '[{0}] '
         empty: 没有@的消息记录。
         no-subscription: 你尚未订阅此频道！请使用 [前缀]at.subscribe 进行订阅！
+      shortcuts: 
+        at.get: 获取@记录
     subscribe: 
       messages:
         success: 添加订阅成功！
         exist: 已经订阅此频道！
-      shortcut: 订阅@
+      shortcuts: 
+        at.subscribe: 订阅此频道
     unsubscribe:
       messages:
         none: 你没有订阅过此频道！
         success: 移除订阅成功！
+      shortcuts: 
+        at.unsubscribe: 取消订阅此频道
