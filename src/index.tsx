@@ -86,7 +86,7 @@ export function apply(ctx: Context, config: Config) {
   })
 
   ctx.command('at.get')
-  .option('count', '-n <count:number>', { fallback: 10 })
+  .option('count', '-n <count:number>', { fallback: 100 })
   .shortcut('at.get', { i18n: true, fuzzy: true })
   .option('all', '-a')
   .option('reverse', '-r')
