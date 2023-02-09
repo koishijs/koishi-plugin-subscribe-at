@@ -11,6 +11,7 @@ declare module 'koishi' {
 
 export interface AtRecord {
   id: number
+  quoteMessageId: string
   targetId: string
   senderId: string
   nickname: string
@@ -40,7 +41,7 @@ async function transformAt(elements: Element[], session: Session): Promise<Eleme
   return Promise.all(elements.map(async e => {
     if (e.type !== 'at') return e
     const target = await session.bot.getGuildMember(session.guildId, e.attrs.id)
-    return h.text(`@${target.nickname || target.username || target.userId} `)
+    return h.text(`@${target.nickname || target.username || target.userId}`)
   }))
 }
 
@@ -55,6 +56,7 @@ export function apply(ctx: Context, config: Config) {
     guildName: 'string',
     content: 'text',
     time: 'timestamp',
+    quoteMessageId: 'string',
   }, {
     autoInc: true,
   })
@@ -65,11 +67,11 @@ export function apply(ctx: Context, config: Config) {
 
   ctx.guild().middleware(async (session, next) => {
     const contentElements = config.atDeduplication ? dedupe(session.elements, elem => elem.attrs.id ?? Math.random()) : session.elements
+    const { atSubscribers } = await ctx.database.getChannel(session.platform, session.channelId)
     const atElements = contentElements.filter(elem => elem.type === 'at' && atSubscribers.includes(elem.attrs.id))
     if (atElements.length < 1) return next()
     // `Promise.all()` here makes all asynchronous functions running concurrently.
-    const [{ atSubscribers }, { guildName }, sender, content] = await Promise.all([
-      ctx.database.getChannel(session.platform, session.channelId),
+    const [{ guildName }, sender, content] = await Promise.all([
       session.bot.getGuild(session.guildId),
       session.bot.getGuildMember(session.guildId, session.userId),
       transformAt(contentElements, session),
@@ -77,9 +79,10 @@ export function apply(ctx: Context, config: Config) {
     const time = new Date(session.timestamp)
 
     await ctx.database.upsert('at_record', atElements.map(e => ({
-      targetId: e.attrs.id,
-      senderId: session.userId,
       nickname: sender.nickname || sender.username || sender.userId,
+      quoteMessageId: session.quote?.messageId,
+      senderId: session.userId,
+      targetId: e.attrs.id,
       content: content.join(''),
       guildName,
       time,
@@ -108,6 +111,7 @@ export function apply(ctx: Context, config: Config) {
       await session.sendQueued(<message forward>
         {messages.slice(o, o + 100).map(e => <>
           <message userId={e.senderId} nickname={e.nickname} time={e.time.getTime()}>
+            {e.quoteMessageId && <quote id={e.quoteMessageId}/>}
             <i18n path=".guild">{[e.guildName]}</i18n>
             {h.parse(e.content)}
           </message>
