@@ -87,7 +87,7 @@ export function apply(ctx: Context, config: Config) {
 
   ctx.command('at.get')
   .option('count', '-n <count:number>', { fallback: 100 })
-  .shortcut('at.get', { i18n: true, fuzzy: true })
+  .shortcut('at.get', { i18n: true })
   .option('all', '-a')
   .option('reverse', '-r')
   .action(async ({ session, options }) => {
@@ -116,13 +116,19 @@ export function apply(ctx: Context, config: Config) {
     if (config.deleteBeforeGet) await ctx.database.remove('at_record', messages.map(m => m.id))
   })
 
-  ctx.command('at.subscribe').channelFields(['atSubscribers']).action(({ session }) => {
+  ctx.command('at.subscribe')
+  .channelFields(['atSubscribers'])
+  .shortcut('at.subscribe', { i18n: true })
+  .action(({ session }) => {
     if (session.channel.atSubscribers.includes(session.userId)) return session.text('.exist')
     session.channel.atSubscribers.push(session.userId)
     return session.text('.success')
   })
 
-  ctx.command('at.unsubscribe').channelFields(['atSubscribers']).action(({ session }) => {
+  ctx.command('at.unsubscribe')
+  .shortcut('at.unsubscribe', { i18n: true })
+  .channelFields(['atSubscribers'])
+  .action(({ session }) => {
     const sub = session.channel.atSubscribers
     const index = sub.indexOf(session.userId)
     if (index < 0) return session.text('.none')
