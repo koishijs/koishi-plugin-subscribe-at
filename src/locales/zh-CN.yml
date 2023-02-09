@@ -3,7 +3,8 @@ commands:
     get:
       messages:
         guild: '[{0}] '
-        empty: '没有@的消息记录。'
+        empty: 没有@的消息记录。
+        no-subscription: 你尚未订阅此频道！请使用 [前缀]at.subscribe 进行订阅！
     subscribe: 
       messages:
         success: 添加订阅成功！

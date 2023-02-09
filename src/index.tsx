@@ -90,8 +90,12 @@ export function apply(ctx: Context, config: Config) {
   .option('all', '-a')
   .option('reverse', '-r')
   .action(async ({ session, options }) => {
-    const totalCount = await ctx.database.select('at_record').where({ targetId: session.userId }).execute(r => $.count(r.id))
+    const [ totalCount, { atSubscribers }] = await Promise.all([
+      ctx.database.select('at_record').where({ targetId: session.userId }).execute(r => $.count(r.id)),
+      ctx.database.getChannel(session.platform, session.guildId),
+    ])
 
+    if (!atSubscribers.includes(session.userId) && totalCount < 1) return session.text('.no-subscription')
     if (totalCount < 1) return session.text('.empty')
 
     const messages = await ctx.database.get('at_record', { targetId: session.userId }, 
@@ -100,8 +104,7 @@ export function apply(ctx: Context, config: Config) {
     for (let o = 0; o < messages.length; o += 100) {
       await session.sendQueued(<message forward>
         {messages.slice(o, o + 100).map(e => <>
-          <message>
-            <author userId={e.senderId} nickname={e.nickname}/>
+          <message userId={e.senderId} nickname={e.nickname} time={e.time.getTime()}>
             <i18n path=".guild">{[e.guildName]}</i18n>
             {h.parse(e.content)}
           </message>
