@@ -88,12 +88,14 @@ export function apply(ctx: Context, config: Config) {
   ctx.command('at.get')
   .option('count', '-n <count:number>', { fallback: 10 })
   .option('all', '-a')
+  .option('reverse', '-r')
   .action(async ({ session, options }) => {
     const totalCount = await ctx.database.select('at_record').where({ targetId: session.userId }).execute(r => $.count(r.id))
 
     if (totalCount < 1) return session.text('.empty')
 
-    const messages = await ctx.database.get('at_record', { targetId: session.userId }, { limit: options.all ? totalCount : Math.min(options.count, totalCount) })
+    const messages = await ctx.database.get('at_record', { targetId: session.userId }, 
+    { limit: options.all ? totalCount : Math.min(options.count, totalCount), sort: { id: options.reverse ? 'desc' : 'asc' }})
 
     for (let o = 0; o < messages.length; o += 100) {
       await session.sendQueued(<message forward>
