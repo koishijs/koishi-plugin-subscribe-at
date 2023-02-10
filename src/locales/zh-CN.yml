@@ -4,7 +4,7 @@ commands:
       messages:
         guild: '[{0}] '
         empty: 没有@的消息记录。
-        no-subscription: 你尚未订阅此频道！请使用 [前缀]at.subscribe 进行订阅！
+        no-subscription: 你尚未订阅此频道！请使用 [<i18n path="commands.at.subscribe.shortcuts.at-subscribe"/>] 进行订阅！
       shortcuts: 
         at.get: 获取@记录
     subscribe: 
