@@ -110,9 +110,8 @@ export function apply(ctx: Context, config: Config) {
     for (let o = 0; o < messages.length; o += 100) {
       await session.sendQueued(<message forward>
         {messages.slice(o, o + 100).map(e => <>
-          <message userId={e.senderId} nickname={e.nickname} time={e.time.getTime()}>
+          <message userId={e.senderId} nickname={session.text('.guild', [e.guildName]) + e.nickname} time={e.time.getTime()}>
             {e.quoteMessageId && <quote id={e.quoteMessageId}/>}
-            <i18n path=".guild">{[e.guildName]}</i18n>
             {h.parse(e.content)}
           </message>
         </>)}
