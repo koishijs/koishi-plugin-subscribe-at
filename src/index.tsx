@@ -91,10 +91,11 @@ export function apply(ctx: Context, config: Config) {
   })
 
   ctx.command('at.get')
-  .option('count', '-n <count:number>', { fallback: 100 })
-  .shortcut('at.get', { i18n: true })
-  .option('all', '-a')
-  .option('reverse', '-r')
+  .shortcut('at.get', { i18n: true, fuzzy: true })
+  .option('count', '-n <count:number>', { fallback: 100, descPath: 'commands.at.get.options.count' })
+  .option('all', '-a', { descPath: 'commands.at.get.options.all' })
+  .option('reverse', '-r', { descPath: 'commands.at.get.options.reverse' })
+  .example('<i18n path="commands.at.get.shortcuts.at.get"/> -r')
   .action(async ({ session, options }) => {
     const [ totalCount, { atSubscribers }] = await Promise.all([
       ctx.database.select('at_record').where({ targetId: session.userId }).execute(r => $.count(r.id)),

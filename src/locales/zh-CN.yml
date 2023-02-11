@@ -1,21 +1,30 @@
 commands:
   at:
     get:
+      description: 获取记录到的@你的历史记录。
+      usage: 首先输入 [<i18n path="commands.at.subscribe.shortcuts.at.subscribe"/>] 订阅此群的@信息，然后就可以在有人@你之后使用 [<i18n path="commands.at.get.shortcuts.at.get"/>] 获取到@你的消息了
+      options:
+        count: 一次最大获取的数量，默认为100。
+        all: 获取全部的消息记录。
+        reverse: 反向输出的结果。
       messages:
+        command-examples: '[<i18n path="commands.at.subscribe.shortcuts.at.subscribe"/>] -r'
         guild: '[{0}] '
         empty: 没有@的消息记录。
-        no-subscription: 你尚未订阅此频道！请使用 [<i18n path="commands.at.subscribe.shortcuts.at-subscribe"/>] 进行订阅！
-      shortcuts: 
+        no-subscription: 你尚未订阅此频道！请使用 [<i18n path="commands.at.subscribe.shortcuts.at.subscribe"/>] 进行订阅！
+      shortcuts:
         at.get: 获取@记录
-    subscribe: 
+    subscribe:
+      description: 订阅这个频道所有@你的消息。
       messages:
         success: 添加订阅成功！
         exist: 已经订阅此频道！
-      shortcuts: 
+      shortcuts:
         at.subscribe: 订阅此频道
     unsubscribe:
+      description: 订取消订阅这个频道
       messages:
         none: 你没有订阅过此频道！
         success: 移除订阅成功！
-      shortcuts: 
+      shortcuts:
         at.unsubscribe: 取消订阅此频道
