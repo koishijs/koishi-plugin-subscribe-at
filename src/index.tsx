@@ -24,13 +24,13 @@ export const name = 'subscribe-at'
 export interface Config {
   atDeduplication: boolean
   deleteBeforeGet: boolean
-  adimAuthorityLevel: number
+  adminAuthorityLevel: number
 }
 
 export const Config: Schema<Config> = Schema.object({
   atDeduplication: Schema.boolean().default(true).description('@去重，如果关闭，在被回复的时候有可能出现两个@。'),
   deleteBeforeGet: Schema.boolean().default(true).description('是否在阅读后删除数据库中的消息记录。'),
-  adimAuthorityLevel: Schema.number().default(3).description('可以查询/订阅别人的@消息记录的权限等级'),
+  adminAuthorityLevel: Schema.number().default(3).description('可以查询/订阅别人的@消息记录的权限等级'),
 })
 
 export const using = ['database'] as const
@@ -97,7 +97,7 @@ export function apply(ctx: Context, config: Config) {
   .option('count', '-n <count:number>', { fallback: 100, descPath: 'commands.at.get.options.count' })
   .option('all', '-a', { descPath: 'commands.at.get.options.all' })
   .option('reverse', '-r', { descPath: 'commands.at.get.options.reverse' })
-  .option('user', '-u <user:user>', { authority: config.adimAuthorityLevel, descPath: 'commands.at.options.user' })
+  .option('user', '-u <user:user>', { authority: config.adminAuthorityLevel, descPath: 'commands.at.options.user' })
   .example('<i18n path="commands.at.get.shortcuts.at.get"/> -r')
   .action(async ({ session, options }) => {
     const targetId = options.user?.split(':')[1] ?? session.userId
@@ -129,23 +129,53 @@ export function apply(ctx: Context, config: Config) {
   ctx.command('at.subscribe')
   .channelFields(['atSubscribers'])
   .shortcut('at.subscribe', { i18n: true, fuzzy: true })
-  .option('user', '-u <user:user>', { authority: config.adimAuthorityLevel, descPath: 'commands.at.options.user' })
-  .action(({ session, options }) => {
+  .option('user', '-u <user:user>', { authority: config.adminAuthorityLevel, descPath: 'commands.at.options.user' })
+  .option('channel', '-c <channel:channel>', { descPath: 'commands.at.options.channel' })
+  .example('<i18n path="commands.at.subscribe.shortcuts.at.subscribe"/> -c #1234567')
+  .action(async ({ session, options }) => {
     const targetId = options.user?.split(':')[1] ?? session.userId
-    if (session.channel.atSubscribers.includes(targetId)) return session.text('.exist')
-    session.channel.atSubscribers.push(targetId)
+    if (!options.channel) {
+      const sub = session.channel.atSubscribers
+      if (sub.includes(targetId)) return session.text('.exist')
+      sub.push(targetId)
+    } else {
+      const channelId = options.channel?.split(':')[1]
+      const channel = await ctx.database.getChannel(session.platform, channelId, ['atSubscribers'])
+      if (!channel) return session.text('.channel-not-exist')
+      const { atSubscribers: sub } = channel
+
+      if (sub.includes(targetId)) return session.text('.exist')
+      sub.push(targetId)
+      
+      await ctx.database.setChannel(session.platform, channelId, { atSubscribers: sub })
+    }
     return session.text('.success')
   })
 
   ctx.command('at.unsubscribe')
   .shortcut('at.unsubscribe', { i18n: true, fuzzy: true })
   .channelFields(['atSubscribers'])
-  .option('user', '-u <user:user>', { authority: config.adimAuthorityLevel, descPath: 'commands.at.options.user' })
-  .action(({ session, options }) => {
-    const sub = session.channel.atSubscribers
-    const index = sub.indexOf(options.user?.split(':')[1] ?? session.userId)
-    if (index < 0) return session.text('.none')
-    sub.splice(index, 1)
+  .option('user', '-u <user:user>', { authority: config.adminAuthorityLevel, descPath: 'commands.at.options.user' })
+  .option('channel', '-c <channel:channel>', { descPath: 'commands.at.options.channel' })
+  .action(async ({ session, options }) => {
+    const targetId = options.user?.split(':')[1] ?? session.userId
+    if (!options.channel) {
+      const sub = session.channel.atSubscribers
+      const index = sub.indexOf(targetId)
+      if (index < 0) return session.text('.none')
+      sub.splice(index, 1)
+    } else {
+      const channelId = options.channel?.split(':')[1]
+      const channel = await ctx.database.getChannel(session.platform, channelId, ['atSubscribers'])
+      if (!channel) return session.text('.channel-not-exist')
+
+      const { atSubscribers: sub } = channel
+      const index = sub.indexOf(targetId)
+      if (index < 0) return session.text('.none')
+
+      sub.splice(index, 1)
+      await ctx.database.setChannel(session.platform, channelId, { atSubscribers: sub })
+    }
     return session.text('.success')
   })
 }
