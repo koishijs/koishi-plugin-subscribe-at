@@ -1,5 +1,7 @@
 commands:
   at:
+    options:
+      user: 指定目标用户。
     get:
       description: 获取记录到的@你的历史记录。
       usage: 首先输入 [<i18n path="commands.at.subscribe.shortcuts.at.subscribe"/>] 订阅此群的@信息，然后就可以在有人@你之后使用 [<i18n path="commands.at.get.shortcuts.at.get"/>] 获取到@你的消息了
