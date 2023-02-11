@@ -97,9 +97,9 @@ export function apply(ctx: Context, config: Config) {
   .option('reverse', '-r', { descPath: 'commands.at.get.options.reverse' })
   .example('<i18n path="commands.at.get.shortcuts.at.get"/> -r')
   .action(async ({ session, options }) => {
-    const [ totalCount, { atSubscribers }] = await Promise.all([
+    const [ totalCount, { atSubscribers } = { atSubscribers: [] }] = await Promise.all([
       ctx.database.select('at_record').where({ targetId: session.userId }).execute(r => $.count(r.id)),
-      ctx.database.getChannel(session.platform, session.guildId),
+      ctx.database.getChannel(session.platform, session.guildId, ['atSubscribers']),
     ])
 
     if (!atSubscribers.includes(session.userId) && totalCount < 1) return session.transform(h.parse(session.text('.no-subscription')))
