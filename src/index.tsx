@@ -102,7 +102,7 @@ export function apply(ctx: Context, config: Config) {
       ctx.database.getChannel(session.platform, session.guildId),
     ])
 
-    if (!atSubscribers.includes(session.userId) && totalCount < 1) return session.transform([<i18n path=".no-subscription" />])
+    if (!atSubscribers.includes(session.userId) && totalCount < 1) return session.transform(h.parse(session.text('.no-subscription')))
     if (totalCount < 1) return session.text('.empty')
 
     const messages = await ctx.database.get('at_record', { targetId: session.userId }, 
