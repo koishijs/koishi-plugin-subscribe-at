@@ -26,7 +26,7 @@ commands:
       shortcuts:
         at.subscribe: 订阅此频道
     unsubscribe:
-      description: 订取消订阅这个频道
+      description: 取消订阅这个频道
       messages:
         none: 你没有订阅过此频道！
         success: 移除订阅成功！
